@@ -28,6 +28,7 @@ MainWindow::MainWindow(QWidget *parent)
     database.setUserName("root");
     database.setPassword("");
 
+
     //    if(!database.open())
     //        ui->status->setText("Failed to open the database");
     //    else
@@ -99,22 +100,22 @@ void MainWindow::on_loginbutton_clicked()
 {
     QSqlDatabase db;
 
-    db = QSqlDatabase::addDatabase("QSQLITE", "MyConnect");
+    db = QSqlDatabase::addDatabase("QSQLITE", "Connection");
     db.setDatabaseName("C:/Users/faruk/OneDrive/Documents/MeslekKayitSisitemi/savePeople.sqlite");
     db.setHostName("localhost");
     db.setUserName("root");
     db.setPassword("");
 
+    //retreive data from input fields
+    QString username = ui->username_2->text();
+    QString password = ui->password_2->text();
+
     if(db.open()) {
 
-        //retreive data from input fields
-        QString username = ui->username_2->text();
-        QString password = ui->password_2->text();
-
         // Run our insert query
-        QSqlQuery qry_asker(QSqlDatabase::database("MyConnect"));
-        QSqlQuery qry_polis(QSqlDatabase::database("MyConnect"));
-        QSqlQuery qry_savci(QSqlDatabase::database("MyConnect"));
+        QSqlQuery qry_asker(QSqlDatabase::database("Connection"));
+        QSqlQuery qry_polis(QSqlDatabase::database("Connection"));
+        QSqlQuery qry_savci(QSqlDatabase::database("Connection"));
 
         qry_asker.prepare(QString("SELECT * FROM askerList WHERE username = :username AND password = :password"));
         qry_polis.prepare(QString("SELECT * FROM polisList WHERE username = :username AND password = :password"));
@@ -130,89 +131,50 @@ void MainWindow::on_loginbutton_clicked()
         qry_savci.bindValue(":password", password);
 
 
-        if(!qry_asker.exec()) {
+        if(!qry_asker.exec() || !qry_polis.exec() || !qry_savci.exec()) {
 
             QMessageBox::information(this, "Failed", "Query Failed To Execute");
 
         } else {
 
-            while(qry_asker.next()) {
+            if(qry_asker.next()) {
 
-                QString username_from_DB_asker = qry_asker.value(4).toString();
-                QString password_from_DB_asker = qry_asker.value(5).toString();
+                QMessageBox::information(this, "Success", "Dear Asker, Login Success");
 
-                if(username_from_DB_asker == username && password_from_DB_asker == password) {
+                hide();
+                mydialog dialog;
+                dialog.setModal(true);
+                dialog.exec();
+            }
 
-                    QMessageBox::information(this, "Success", "Dear Asker, Login Success");
+            else if(qry_polis.next()) {
 
-                    hide();
-                    mydialog dialog;
-                    dialog.setModal(true);
-                    dialog.exec();
+                QMessageBox::information(this, "Success", "Dear Polis, Login Success");
 
-                } else {
+                hide();
+                mydialog dialog;
+                dialog.setModal(true);
+                dialog.exec();
+            }
 
-                    QMessageBox::information(this, "Failed", "Login Failed");
-                }
+            else if(qry_savci.next()) {
+
+                QMessageBox::information(this, "Success", "Dear Savci, Login Success");
+
+                hide();
+                mydialog dialog;
+                dialog.setModal(true);
+                dialog.exec();
+            }
+
+            else
+            {
+                QMessageBox::information(this, "Failed", "Login Failed");
             }
         }
+    }
 
-        if(!qry_polis.exec()) {
-
-            QMessageBox::information(this, "Failed", "Query Failed To Execute");
-
-        } else {
-
-            while(qry_polis.next()) {
-
-                QString username_from_DB_polis = qry_polis.value(4).toString();
-                QString password_from_DB_polis = qry_polis.value(5).toString();
-
-                if(username_from_DB_polis == username && password_from_DB_polis == password) {
-
-                    QMessageBox::information(this, "Success", "Dear Polis, Login Success");
-
-                    hide();
-                    mydialog dialog;
-                    dialog.setModal(true);
-                    dialog.exec();
-
-                } else {
-
-                    QMessageBox::information(this, "Failed", "Login Failed");
-                }
-            }
-        }
-
-        if(!qry_savci.exec()) {
-
-            QMessageBox::information(this, "Failed", "Query Failed To Execute");
-
-        } else {
-
-            while(qry_savci.next()) {
-
-                QString username_from_DB_savci = qry_savci.value(4).toString();
-                QString password_from_DB_savci = qry_savci.value(5).toString();
-
-                if(username_from_DB_savci == username && password_from_DB_savci == password) {
-
-                    QMessageBox::information(this, "Success", "Dear Savci, Login Success");
-
-                    hide();
-                    mydialog dialog;
-                    dialog.setModal(true);
-                    dialog.exec();
-
-                } else {
-
-                    QMessageBox::information(this, "Failed", "Login Failed");
-                }
-            }
-        }
-
-    } else {
-        // qDebug() << qry.lastError().text();
+    else {
         QMessageBox::information(this, "Database Failed", "Database Connection Failed");
     }
 }
